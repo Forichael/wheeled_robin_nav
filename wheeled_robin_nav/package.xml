@@ -1,0 +1,16 @@
+<package>
+  <name>wheeled_robin_nav</name>
+  <version>1.0.0</version>
+  <description>The wheeled_robin_nav package provides different a  different local planner.</description>
+  <maintainer email="stephan.hofstaetter@gmail.com">Stephan Hofstaetter</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki/wheeled_robin_nav</url>
+  <url type="repository">https://github.com/robinJKU/wheeled_robin_nav</url>
+  <url type="bugtracker">https://github.com/robinJKU/wheeled_robin_nav/issues</url>
+  <author email="stephan.hofstaetter@gmail.com">Stephan Hofstaetter</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <export>
+    <metapackage/>
+  </export>
+</package>
+
