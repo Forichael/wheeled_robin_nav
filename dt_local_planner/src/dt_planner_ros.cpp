@@ -100,8 +100,26 @@ namespace dt_local_planner {
     }
 
     //getting the plan
-    plan_ = orig_global_plan;
+    //plan_ = orig_global_plan;
+
+    //int planIndex = 0;
+    //std:string s;
+    //std:string delimiter = ";";
+    std:ifstream getPlan("/home/turtlebot/plan.txt");
+
+    if(getPlan.is.open()){
+      while(getline (myfile,line)){
+        ROS_INFO("%f",line);
+      }
+    }else{
+      ROS_ERROR_NAMED("dt_local_planner", "could not open plan file");
+    }
+    getPlan.close();
+    
+
+
     planSize_ = plan_.size();
+    //planSize_ = 20;
     ROS_INFO_NAMED("dt_local_planner", "Got new plan with size: %d",planSize_);
 
     //setting our goal
@@ -112,36 +130,49 @@ namespace dt_local_planner {
     std::vector<double> p_x (planSize_, 0.);
     std::vector<double> p_y (planSize_, 0.);
     std::vector<double> p_t (planSize_, 0.);
-
+    
+    std::ofstream myfile;
+    myfile.open("/home/turtlebot/plan_gen.txt", std::ofstream::out | std::ofstream::app);
+    myfile << "x;y\n";
     //generating p_x,p_y out of the global plan
     for(int index = 0;index < planSize_;index++){
+      myfile << plan_[index].pose.position.x << ";" << plan_[index].pose.position.y << "\n";
       p_x[index] = plan_[index].pose.position.x;
       p_y[index] = plan_[index].pose.position.y;
       //ROS_INFO_NAMED("dt_local_planner", "p_x %f",p_x[index]);
     }
+    myfile.close();
     ROS_INFO_NAMED("dt_local_planner", "p_x,p_y generated!");
+
   
     //calculating time between each points with x = v * t
     double max_vel_deltaT;
-    double deltaR;
-    double deltaT;
-    
+    double dx, dy, dr, dt;
     //calculating time between each points with x = v * t
     //with a weighting of the first steps until the full speed should apply
-
     for(int index = 1;index < planSize_;index++){
-      deltaR = sqrt( pow(p_x[index] - p_x[index-1], 2.0) + pow(p_y[index] - p_y[index-1], 2.0) );
-      if(index <= stepCnt_max_vel_){
-        max_vel_deltaT = max_vel_deltaT0_*index/stepCnt_max_vel_;
-      }
-      deltaT = deltaR / max_vel_deltaT;
-      p_t[index] = p_t[index-1] + deltaT;
+      dx = p_x[index] - p_x[index-1];
+      dy = p_y[index] - p_y[index-1];
+      dr = sqrt(pow(dx,2.0)+pow(dy,2.0));
+      dt = dr/vel_max_;
+      p_t[index] = p_t[index-1] + dt;
       //ROS_INFO_NAMED("dt_local_planner", "p_t %f",p_t[index]);
     }
+
+    std::ofstream myfile2;
+    myfile2.open("/home/turtlebot/time_gen.txt", std::ofstream::out|std::ofstream::app);
+    myfile2 << "t\n";
+    for(int i=0;i<p_t.size();i++){
+      myfile2 <<  p_t[i] << "\n";
+    }
+    myfile2.close();
+
+
+
     ROS_INFO_NAMED("dt_local_planner", "p_t generated!");
 
     //define polygrad
-    //nPolyGrad_ = 15;//planSize_-1;
+    nPolyGrad_ = floor(planSize_/3)-1;
 
     //calculation of the polynom coefficiencies from a0 to an
     //http://vilipetek.com/2013/10/07/polynomial-fitting-in-c-using-boost/
@@ -149,6 +180,32 @@ namespace dt_local_planner {
     aCoeff_y_ = polyfit(p_t, p_y, nPolyGrad_);
     ROS_INFO_NAMED("dt_local_planner", "Calculated polyfit for x and y with grade %d",
     nPolyGrad_);
+
+    aCoeff_x_mat_[0] = 2.15;
+    aCoeff_x_mat_[1] = -0.0111;
+    aCoeff_x_mat_[2] = 0.1316;
+    aCoeff_x_mat_[3] = -0.7016;
+    aCoeff_x_mat_[4] = 1.9276;
+    aCoeff_x_mat_[5] = -3.1317;
+    aCoeff_x_mat_[6] = 3.1906;
+    aCoeff_x_mat_[7] = -2.0935;
+    aCoeff_x_mat_[8] = 0.8833;
+    aCoeff_x_mat_[9] = -0.2314;
+    aCoeff_x_mat_[10] = 0.0342;
+    aCoeff_x_mat_[11] = -0.0022;
+
+    aCoeff_y_mat_[0] = -1.45;
+    aCoeff_y_mat_[1] = 0.2993;
+    aCoeff_y_mat_[2] = 0.0105;
+    aCoeff_y_mat_[3] = -0.0573;
+    aCoeff_y_mat_[4] = 0.1609;
+    aCoeff_y_mat_[5] = -0.2641;
+    aCoeff_y_mat_[6] = 0.2705;
+    aCoeff_y_mat_[7] = -0.1780;
+    aCoeff_y_mat_[8] = 0.0752;
+    aCoeff_y_mat_[9] = -0.0197;
+    aCoeff_y_mat_[10] = 0.0029;
+    aCoeff_y_mat_[11] = -0.0002;
 
     //we are at he beginning; goal_reached_ set to false;
     goal_reached_ = false;
@@ -187,8 +244,8 @@ namespace dt_local_planner {
     double pos_cur_x = current_pose.getOrigin().x();
     double pos_cur_y = current_pose.getOrigin().y();
     double gamma_cur = tf::getYaw(current_pose.getRotation());
-    ROS_INFO_NAMED("dt_local_planner", "Current position (costmap) is (%f, %f) with Angular (%f)",pos_cur_x, pos_cur_y, gamma_cur);
-    ROS_INFO_NAMED("dt_local_planner", "Current goal is (%f, %f)",goal_x_, goal_y_);
+    ROS_INFO_NAMED("dt_local_planner", "Current position (costmap) is (%f, %f) with Angular (%f)", pos_cur_x, pos_cur_y, gamma_cur);
+    ROS_INFO_NAMED("dt_local_planner", "Current goal is (%f, %f)", goal_x_,goal_y_);
 
     //check if we are at the goal
     double dist_x = fabs(goal_x_ - pos_cur_x);
@@ -196,7 +253,7 @@ namespace dt_local_planner {
     ROS_INFO_NAMED("dt_local_planner", "Current distance to goal (%f, %f)",dist_x, dist_y);
   
     //(dist_x > 0.00001 || dist_y > 0.00001) && 
-    if(move_){//we are not at the goal, compute on when we are allowed to move
+    if((dist_x > 0.1 || dist_y > 0.01) && move_){//we are not at the goal, compute on when we are allowed to move
       ROS_INFO_NAMED("dt_local_planner", "preparing to move:"); 
   
       //get the current velocity -> vel_cur
@@ -204,20 +261,20 @@ namespace dt_local_planner {
       odom_helper_.getRobotVel(robot_vel);
       double vel_cur_lin = robot_vel.getOrigin().x();
       double vel_cur_ang = robot_vel.getOrigin().y();
-      
+
       /* //different way to get the velocity
       nav_msgs::Odometry odom;
       odom_helper_.getOdom(odom);
       double vel_cur_lin = odom.twist.twist.linear.x;
       double vel_cur_ang = odom.twist.twist.angular.z;
       */
-      ROS_INFO_NAMED("dt_local_planner", "Current robot velocity (lin/ang): (%f/%f)",	vel_cur_lin,vel_cur_ang);
+      ROS_INFO_NAMED("dt_local_planner", "Current robot velocity (lin/ang): (%f/%f)",   vel_cur_lin,vel_cur_ang);
 
       //calculate time in seconds
       double current_time = ros::Time::now().toSec() - start_time_;
       ROS_INFO_NAMED("dt_local_planner", "time in seconds: %f",current_time); 
 
-      std::vector<double> time_vec (planSize_, 0.);
+      std::vector<double> time_vec (nPolyGrad_+1, 0.);
 
       for(int index = 0; index <= nPolyGrad_;index++){
         time_vec[index] = pow(current_time,index);
@@ -234,13 +291,13 @@ namespace dt_local_planner {
       double acc_dest_x = 0;
       double acc_dest_y = 0;
       
-      
       if(aCoeff_x_.size() != time_vec.size()){
-        ROS_ERROR_NAMED("dt_local_planner","poliniomial coefficients vector and time vector do not match");
-        ROS_INFO_NAMED(" coefficients vector size = %d",aCoeff_x_.size());
-        ROS_INFO_NAMED(" time vector size = %d",time_vec.size());
+        ROS_ERROR_NAMED("dt_local_planner", "coefficiency vector and time vector does not match");
+        ROS_INFO_NAMED("dt_local_planner", "acoeff size = %d", aCoeff_x_.size());
+        ROS_INFO_NAMED("dt_local_planner", "time vector size = %d", time_vec.size());
       }
-      
+
+
       for(int i=0;i<=nPolyGrad_;i++)
       {
         temp_x = aCoeff_x_[i]*time_vec[i];
@@ -281,7 +338,7 @@ namespace dt_local_planner {
 
       double acc_l = cos( gamma_cur ) * lambda_x + sin( gamma_cur ) * lambda_y;
 
-      
+
       double omega = 0;
       if(fabs(vel_cur_lin) > 0.001){
         omega = (-sin(gamma_cur) * lambda_x + cos(gamma_cur) * lambda_y) / vel_cur_lin;
