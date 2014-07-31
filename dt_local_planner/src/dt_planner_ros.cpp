@@ -45,6 +45,9 @@
 #include <nav_msgs/Path.h>
 #include <angles/angles.h>
 
+#include <fstream>
+#include <string>
+
 //register this planner as a BaseLocalPlanner plugin
 PLUGINLIB_EXPORT_CLASS(dt_local_planner::DTPlannerROS, nav_core::BaseLocalPlanner)
 
@@ -100,25 +103,13 @@ namespace dt_local_planner {
     }
 
     //getting the plan
-    //plan_ = orig_global_plan;
+    plan_ = orig_global_plan;  
 
-    //int planIndex = 0;
-    //std:string s;
-    //std:string delimiter = ";";
-    std:ifstream getPlan("/home/turtlebot/plan.txt");
-
-    if(getPlan.is.open()){
-      while(getline (myfile,line)){
-        ROS_INFO("%f",line);
-      }
+    if(false){
+      planSize_ = plan_.size();
     }else{
-      ROS_ERROR_NAMED("dt_local_planner", "could not open plan file");
+      planSize_ = 37;
     }
-    getPlan.close();
-    
-
-
-    planSize_ = plan_.size();
     //planSize_ = 20;
     ROS_INFO_NAMED("dt_local_planner", "Got new plan with size: %d",planSize_);
 
@@ -131,6 +122,8 @@ namespace dt_local_planner {
     std::vector<double> p_y (planSize_, 0.);
     std::vector<double> p_t (planSize_, 0.);
     
+    if(false){
+   
     std::ofstream myfile;
     myfile.open("/home/turtlebot/plan_gen.txt", std::ofstream::out | std::ofstream::app);
     myfile << "x;y\n";
@@ -144,9 +137,17 @@ namespace dt_local_planner {
     myfile.close();
     ROS_INFO_NAMED("dt_local_planner", "p_x,p_y generated!");
 
+    }else{
+p_x[0]=2.15;p_x[1]=2.1498;p_x[2]=2.1497;p_x[3]=2.1496;p_x[4]=2.1494;p_x[5]=2.1492;p_x[6]=2.1489;p_x[7]=2.1485;p_x[8]=2.1481;p_x[9]=2.1477;p_x[10]=2.1471;p_x[11]=2.1465;p_x[12]=2.1458;p_x[13]=2.1451;p_x[14]=2.1442;p_x[15]=2.1432;p_x[16]=2.1421;p_x[17]=2.1409;p_x[18]=2.1397;p_x[19]=2.1383;p_x[20]=2.1367;p_x[21]=2.1351;p_x[22]=2.1334;p_x[23]=2.1315;p_x[24]=2.1295;p_x[25]=2.1273;p_x[26]=2.1251;p_x[27]=2.1227;p_x[28]=2.1202;p_x[29]=2.1175;p_x[30]=2.1147;p_x[31]=2.1118;p_x[32]=2.1088;p_x[33]=2.1055;p_x[34]=2.1051;p_x[35]=2.1033;p_x[36]=2.1;
+
+p_y[0]=-1.45;p_y[1]=-1.4229;p_y[2]=-1.3979;p_y[3]=-1.3729;p_y[4]=-1.3479;p_y[5]=-1.3229;p_y[6]=-1.2979;p_y[7]=-1.2729;p_y[8]=-1.2479;p_y[9]=-1.2229;p_y[10]=-1.1979;p_y[11]=-1.1729;p_y[12]=-1.1479;p_y[13]=-1.1229;p_y[14]=-1.098;p_y[15]=-1.073;p_y[16]=-1.048;p_y[17]=-1.023;p_y[18]=-0.99806;p_y[19]=-0.9731;p_y[20]=-0.94815;p_y[21]=-0.9232;p_y[22]=-0.89826;p_y[23]=-0.87333;p_y[24]=-0.84841;p_y[25]=-0.8235;p_y[26]=-0.79861;p_y[27]=-0.77372;p_y[28]=-0.74885;p_y[29]=-0.72399;p_y[30]=-0.69915;p_y[31]=-0.67432;p_y[32]=-0.64951;p_y[33]=-0.62471;p_y[34]=-0.59972;p_y[35]=-0.57478;p_y[36]=-0.55;
+
+    goal_x_ = p_x[planSize_-1];
+    goal_y_ = p_y[planSize_-1];
+    }
+
   
     //calculating time between each points with x = v * t
-    double max_vel_deltaT;
     double dx, dy, dr, dt;
     //calculating time between each points with x = v * t
     //with a weighting of the first steps until the full speed should apply
@@ -154,7 +155,7 @@ namespace dt_local_planner {
       dx = p_x[index] - p_x[index-1];
       dy = p_y[index] - p_y[index-1];
       dr = sqrt(pow(dx,2.0)+pow(dy,2.0));
-      dt = dr/vel_max_;
+      dt = dr/max_vel_;
       p_t[index] = p_t[index-1] + dt;
       //ROS_INFO_NAMED("dt_local_planner", "p_t %f",p_t[index]);
     }
