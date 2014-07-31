@@ -187,12 +187,12 @@ namespace dt_local_planner {
     double pos_cur_x = current_pose.getOrigin().x();
     double pos_cur_y = current_pose.getOrigin().y();
     double gamma_cur = tf::getYaw(current_pose.getRotation());
-    ROS_INFO_NAMED("dt_local_planner", "Current position (costmap) is (%f, %f) with Angular (%f)",
-        pos_cur_x, pos_cur_y, gamma_cur);
+    ROS_INFO_NAMED("dt_local_planner", "Current position (costmap) is (%f, %f) with Angular (%f)",pos_cur_x, pos_cur_y, gamma_cur);
+    ROS_INFO_NAMED("dt_local_planner", "Current goal is (%f, %f)",goal_x_, goal_y_);
 
     //check if we are at the goal
-    double dist_x = fabs(goal_x_ - current_pose.getOrigin().x());
-    double dist_y = fabs(goal_y_ - current_pose.getOrigin().x());
+    double dist_x = fabs(goal_x_ - pos_cur_x);
+    double dist_y = fabs(goal_y_ - pos_cur_y);
     ROS_INFO_NAMED("dt_local_planner", "Current distance to goal (%f, %f)",dist_x, dist_y);
   
     //(dist_x > 0.00001 || dist_y > 0.00001) && 
@@ -217,7 +217,7 @@ namespace dt_local_planner {
       double current_time = ros::Time::now().toSec() - start_time_;
       ROS_INFO_NAMED("dt_local_planner", "time in seconds: %f",current_time); 
 
-      std::vector<double> time_vec (nPolyGrad_, 0.);
+      std::vector<double> time_vec (planSize_, 0.);
 
       for(int index = 0; index < nPolyGrad_;index++){
         time_vec[index] = pow(current_time,index);
