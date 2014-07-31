@@ -219,7 +219,7 @@ namespace dt_local_planner {
 
       std::vector<double> time_vec (planSize_, 0.);
 
-      for(int index = 0; index < nPolyGrad_;index++){
+      for(int index = 0; index <= nPolyGrad_;index++){
         time_vec[index] = pow(current_time,index);
         //ROS_INFO_NAMED("dt_local_planner", "calculated poly_t: %f",t_vec[index]); 
       }
@@ -233,7 +233,14 @@ namespace dt_local_planner {
       double vel_dest_y = 0;      
       double acc_dest_x = 0;
       double acc_dest_y = 0;
-
+      
+      
+      if(aCoeff_x_.size() != time_vec.size()){
+        ROS_ERROR_NAMED("dt_local_planner","poliniomial coefficients vector and time vector do not match");
+        ROS_INFO_NAMED(" coefficients vector size = %d",aCoeff_x_.size());
+        ROS_INFO_NAMED(" time vector size = %d",time_vec.size());
+      }
+      
       for(int i=0;i<nPolyGrad_;i++)
       {
         temp_x = aCoeff_x_[i]*time_vec[i];
