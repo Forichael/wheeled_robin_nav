@@ -241,7 +241,7 @@ namespace dt_local_planner {
         ROS_INFO_NAMED(" time vector size = %d",time_vec.size());
       }
       
-      for(int i=0;i<nPolyGrad_;i++)
+      for(int i=0;i<=nPolyGrad_;i++)
       {
         temp_x = aCoeff_x_[i]*time_vec[i];
         temp_y = aCoeff_y_[i]*time_vec[i];
@@ -249,7 +249,7 @@ namespace dt_local_planner {
         pos_dest_y += temp_y;
       }
       ROS_INFO_NAMED("dt_local_planner", "p_x0=%f and p_y0=%f",pos_dest_x,pos_dest_y);
-      for(int i=1;i<nPolyGrad_-1;i++)
+      for(int i=1;i<=nPolyGrad_-1;i++)
       {
         temp_x = aCoeff_x_[i]*i*time_vec[i-1];
         temp_y = aCoeff_y_[i]*i*time_vec[i-1];
@@ -257,7 +257,7 @@ namespace dt_local_planner {
         vel_dest_y += temp_y;
       }
       ROS_INFO_NAMED("dt_local_planner", "p_x1=%f and p_y1=%f",vel_dest_x,vel_dest_y);
-      for(int i=2;i<nPolyGrad_-2;i++)
+      for(int i=2;i<=nPolyGrad_-2;i++)
       {
         temp_x = aCoeff_x_[i]*i*(i+1)*time_vec[i-2];
         temp_y = aCoeff_y_[i]*i*(i+1)*time_vec[i-2];
