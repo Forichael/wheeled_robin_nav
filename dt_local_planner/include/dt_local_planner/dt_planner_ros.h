@@ -136,6 +136,8 @@ namespace dt_local_planner {
 
       std::vector<double> aCoeff_x_;
       std::vector<double> aCoeff_y_;
+      std::vector<double> aCoeff_x_mat_;
+      std::vector<double> aCoeff_y_mat_;      
       
       int nPolyGrad_;
       int planSize_;
