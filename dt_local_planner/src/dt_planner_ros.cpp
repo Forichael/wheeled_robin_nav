@@ -160,6 +160,7 @@ p_y[0]=-1.45;p_y[1]=-1.4229;p_y[2]=-1.3979;p_y[3]=-1.3729;p_y[4]=-1.3479;p_y[5]=
       //ROS_INFO_NAMED("dt_local_planner", "p_t %f",p_t[index]);
     }
 
+    goal_time_ = p_t[planSize_-1];
     std::ofstream myfile2;
     myfile2.open("/home/turtlebot/time_gen.txt", std::ofstream::out|std::ofstream::app);
     myfile2 << "t\n";
@@ -252,9 +253,21 @@ p_y[0]=-1.45;p_y[1]=-1.4229;p_y[2]=-1.3979;p_y[3]=-1.3729;p_y[4]=-1.3479;p_y[5]=
     double dist_x = fabs(goal_x_ - pos_cur_x);
     double dist_y = fabs(goal_y_ - pos_cur_y);
     ROS_INFO_NAMED("dt_local_planner", "Current distance to goal (%f, %f)",dist_x, dist_y);
+
+    //calculate time in seconds
+    double current_time = ros::Time::now().toSec() - start_time_;
+    ROS_INFO_NAMED("dt_local_planner", "time in seconds: %f",current_time); 
+
   
-    //(dist_x > 0.00001 || dist_y > 0.00001) && 
-    if((dist_x > 0.1 || dist_y > 0.01) && move_){//we are not at the goal, compute on when we are allowed to move
+    //(dist_x > 0.00001 || dist_y > 0.00001) &&
+
+    if(current_time > goal_time_ && !goal_reached_){
+      ROS_ERROR_NAMED("dt_local_planner", "goal not reaching in time"); 
+      cmd_vel.linear.x = 0;
+      cmd_vel.angular.z = 0;
+      return false;
+    }
+    else if((dist_x > 0.1 || dist_y > 0.01) && move_){//we are not at the goal, compute on when we are allowed to move
       ROS_INFO_NAMED("dt_local_planner", "preparing to move:"); 
   
       //get the current velocity -> vel_cur
@@ -270,10 +283,6 @@ p_y[0]=-1.45;p_y[1]=-1.4229;p_y[2]=-1.3979;p_y[3]=-1.3729;p_y[4]=-1.3479;p_y[5]=
       double vel_cur_ang = odom.twist.twist.angular.z;
       */
       ROS_INFO_NAMED("dt_local_planner", "Current robot velocity (lin/ang): (%f/%f)",   vel_cur_lin,vel_cur_ang);
-
-      //calculate time in seconds
-      double current_time = ros::Time::now().toSec() - start_time_;
-      ROS_INFO_NAMED("dt_local_planner", "time in seconds: %f",current_time); 
 
       std::vector<double> time_vec (nPolyGrad_+1, 0.);
 
