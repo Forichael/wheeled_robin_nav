@@ -32,7 +32,7 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *
-* Author: Austin Hendrix
+* Author: Stephan Hofstätter
 *********************************************************************/
 #ifndef DT_LOCAL_PLANNER_DT_PLANNER_ROS_H_
 #define DT_LOCAL_PLANNER_DT_PLANNER_ROS_H_
@@ -123,7 +123,6 @@ namespace dt_local_planner {
 
       costmap_2d::Costmap2DROS* costmap_ros_;
 
-      // TODO(hendrix): shared pointer?
       dynamic_reconfigure::Server<DTPlannerConfig> *dsrv_;
 
       bool initialized_;
@@ -133,6 +132,7 @@ namespace dt_local_planner {
       std::vector<geometry_msgs::PoseStamped> plan_;
       double goal_x_ ;
       double goal_y_;
+      double goal_time_;
 
       std::vector<double> aCoeff_x_;
       std::vector<double> aCoeff_y_;
